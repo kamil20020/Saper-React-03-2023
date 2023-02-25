@@ -1,5 +1,6 @@
 ﻿export const TileValues = {
     empty: 0,
-    flag: "f",
+    hidden: "",
+    flag: "F",
     mine: "*"
 }
