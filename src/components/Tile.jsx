@@ -24,7 +24,7 @@ const Tile = ({ field, row, col, onClick}) => {
       onMouseDown={(e) => onClick(e, row, col)}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {(field == TileValues.hidden || field == TileValues.flag) ? "" : field}
+      {(field === TileValues.hidden || field === TileValues.flag || field === TileValues.empty) ? "" : field}
     </div>
   );
 };

@@ -76,42 +76,82 @@ const Game = () => {
   };
 
   const winLogic = () => {
-    const isWon = showedTiles.filter(
-      (tilesRow) =>
-        !tilesRow.filter(
-          (tile) => tile === TileValues.hidden || tile === TileValues.flag
-        )
-    ).length == 0
+    let exploredTiles = 0
+    showedTiles.forEach(
+      (tilesRow) => {
 
-    if(isWon){
+        exploredTiles += tilesRow.filter(
+          (tile) => tile !== TileValues.hidden && tile !== TileValues.flag
+        ).length
+      }
+    )
+
+    if(exploredTiles == 90){
       alert("Wygrana!")
     }
   };
 
+  let exploredShowedTiles = []
+
+  const exploreTiles = (row, col) => {
+
+    if(row < 0 || row == tiles.length || col < 0 || col == tiles.length){
+      return;
+    }
+    
+    const showedTile = exploredShowedTiles[row][col]
+
+    if(showedTile != TileValues.hidden){
+      return;
+    }
+
+    const tile = tiles[row][col]
+
+    exploredShowedTiles[row][col] = tile
+
+    if(tile != TileValues.empty){
+      return;
+    }
+
+    for (let iRow = -1; iRow < 2; iRow++) {
+      for (let iCol = -1; iCol < 2; iCol++) {
+        const neighRow = row + iRow;
+        const neighCol = col + iCol;
+        exploreTiles(neighRow, neighCol)
+      }
+    }
+  }
+
   const handleClick = (e, row, col) => {
-    let tile = showedTiles[row][col];
+    let showedTile = showedTiles[row][col];
     let newShowedTiles = [...showedTiles];
 
     if (e.button == 2) {
-      if (tile == TileValues.flag) {
+      if (showedTile == TileValues.flag) {
         newShowedTiles[row][col] = TileValues.hidden;
         setShowedTiles(newShowedTiles);
-      } else if (tile == TileValues.hidden) {
+      } else if (showedTile == TileValues.hidden) {
         newShowedTiles[row][col] = TileValues.flag;
         setShowedTiles(newShowedTiles);
       }
     } else {
-      if (tile == TileValues.hidden) {
+      if (showedTile == TileValues.hidden) {
         const tile = tiles[row][col];
 
-        newShowedTiles[row][col] = tile;
-        setShowedTiles(newShowedTiles);
+        if (tile !== TileValues.mine) {
+          exploredShowedTiles = [...showedTiles]
+          exploreTiles(row, col, [...showedTiles])
+          setShowedTiles(exploredShowedTiles)
+          exploredShowedTiles = []
 
-        if (tile === TileValues.mine) {
-          loseLogic();
-        } else if (tile instanceof Number) {
-          exploreLogic()
           winLogic()
+        }
+        else{
+          const newShowedTiles = [...showedTiles]
+          newShowedTiles[row][col] = tile
+          setShowedTiles(newShowedTiles)
+
+          loseLogic()
         }
       }
     }
