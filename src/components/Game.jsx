@@ -5,26 +5,40 @@ import Board from "./Board";
 const Game = () => {
   const [tiles, setTiles] = useState([]);
   const [showedTiles, setShowedTiles] = useState([]);
+  const [placedFlags, setPlacedFlags] = useState(0)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [isEndedGame, setIsEndedGame] = useState(false)
+
+  const size = 16
+  const numberOfMines = 40
 
   useEffect(() => {
     initTiles();
     initShowedTiles();
   }, []);
 
+  let timer
+
+  const initTimer = () => {
+    timer = setInterval(() => {
+      setElapsedTime((elapsedTime) => elapsedTime + 1)
+    }, 1000)
+  }
+
   const initTiles = () => {
     let newTiles = [];
 
-    for (let i = 0; i < 10; i++) {
-      const column = new Array(10).fill(TileValues.empty);
+    for (let i = 0; i < size; i++) {
+      const column = new Array(size).fill(TileValues.empty);
       newTiles.push(column);
     }
 
     let minesLocations = [];
 
     //add mines
-    for (let i = 0; i < 10; ) {
-      let randRow = Math.floor(Math.random() * 9);
-      let randCol = Math.floor(Math.random() * 9);
+    for (let i = 0; i < numberOfMines; ) {
+      let randRow = Math.floor(Math.random() * (size - 1));
+      let randCol = Math.floor(Math.random() * (size - 1));
 
       if (newTiles[randRow][randCol] == TileValues.empty) {
         newTiles[randRow][randCol] = TileValues.mine;
@@ -63,8 +77,8 @@ const Game = () => {
   const initShowedTiles = () => {
     let newShowedTiles = [];
 
-    for (let i = 0; i < 10; i++) {
-      const column = new Array(10).fill(TileValues.hidden);
+    for (let i = 0; i < size; i++) {
+      const column = new Array(size).fill(TileValues.hidden);
       newShowedTiles.push(column);
     }
 
@@ -72,6 +86,8 @@ const Game = () => {
   };
 
   const loseLogic = () => {
+    setIsEndedGame(true)
+    clearInterval(timer)
     alert("Przegrana!");
   };
 
@@ -79,21 +95,22 @@ const Game = () => {
     let exploredTiles = 0
     showedTiles.forEach(
       (tilesRow) => {
-
         exploredTiles += tilesRow.filter(
           (tile) => tile !== TileValues.hidden && tile !== TileValues.flag
         ).length
       }
     )
 
-    if(exploredTiles == 90){
+    if(exploredTiles == size*size - numberOfMines){
+      setIsEndedGame(true)
+      clearInterval(timer)
       alert("Wygrana!")
     }
   };
 
   let exploredShowedTiles = []
 
-  const exploreTiles = (row, col) => {
+  const exploreEmptyTiles = (row, col) => {
 
     if(row < 0 || row == tiles.length || col < 0 || col == tiles.length){
       return;
@@ -117,21 +134,36 @@ const Game = () => {
       for (let iCol = -1; iCol < 2; iCol++) {
         const neighRow = row + iRow;
         const neighCol = col + iCol;
-        exploreTiles(neighRow, neighCol)
+        exploreEmptyTiles(neighRow, neighCol)
       }
     }
   }
 
+  const exploreSafeTiles = (row, col) => {
+    console.log("A")
+  }
+
   const handleClick = (e, row, col) => {
+
+    if(isEndedGame){
+      return;
+    }
+
+    if(elapsedTime == 0){
+      initTimer()
+    }
+
     let showedTile = showedTiles[row][col];
     let newShowedTiles = [...showedTiles];
 
     if (e.button == 2) {
       if (showedTile == TileValues.flag) {
         newShowedTiles[row][col] = TileValues.hidden;
+        setPlacedFlags(placedFlags - 1)
         setShowedTiles(newShowedTiles);
       } else if (showedTile == TileValues.hidden) {
         newShowedTiles[row][col] = TileValues.flag;
+        setPlacedFlags(placedFlags + 1)
         setShowedTiles(newShowedTiles);
       }
     } else {
@@ -140,7 +172,7 @@ const Game = () => {
 
         if (tile !== TileValues.mine) {
           exploredShowedTiles = [...showedTiles]
-          exploreTiles(row, col, [...showedTiles])
+          exploreEmptyTiles(row, col, [...showedTiles])
           setShowedTiles(exploredShowedTiles)
           exploredShowedTiles = []
 
@@ -154,12 +186,24 @@ const Game = () => {
           loseLogic()
         }
       }
+      else{
+        exploreSafeTiles(row, col)
+      }
     }
   };
 
   return (
-    <div>
+    <div id="game">
       <Board tiles={showedTiles} onClick={handleClick} />
+      <div id="info">
+        <div id="mines">
+          <p className="tile tile-mine noselect" style={{width: 50, height: 50}}>*</p>
+          <p>{numberOfMines - placedFlags}</p>
+        </div>
+        <div id="timer">
+          Czas: {elapsedTime} s
+        </div>
+      </div>
     </div>
   );
 };
