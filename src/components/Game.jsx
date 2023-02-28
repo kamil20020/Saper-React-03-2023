@@ -112,9 +112,9 @@ const Game = () => {
   const loseLogic = () => {
     setIsEndedGame(true);
     showBoardAfterLose();
-    clearInterval(timer);
-    alert("Przegrana!");
-    afterEndgameLogic()
+    //clearInterval(timer);
+    //alert("Przegrana!");
+    //afterEndgameLogic()
   };
 
   const winLogic = () => {
@@ -127,9 +127,9 @@ const Game = () => {
 
     if (exploredTiles == numberOfRows * numberOfCols - numberOfMines) {
       setIsEndedGame(true);
-      clearInterval(timer);
-      alert("Wygrana!");
-      afterEndgameLogic()
+      //clearInterval(timer);
+      //alert("Wygrana!");
+      //afterEndgameLogic()
     }
   };
 
@@ -180,34 +180,37 @@ const Game = () => {
         const neighTileRow = row + iRow;
         const neighTileCol = col + iCol;
 
-        const neighTile = tiles[neighTileRow][neighTileCol];
-        const neighShowedTile = showedTiles[neighTileRow][neighTileCol];
+        if(neighTileRow < 0 || neighTileRow == numberOfRows || neighTileCol < 0 || neighTileCol == numberOfCols){
+          continue;
+        }
 
-        let neighTimeIsMine = false;
+        const neighTile = tiles[neighTileRow][neighTileCol];
+        const neighShowedTile = exploredShowedTiles[neighTileRow][neighTileCol];
+
+        let neighTileIsMine = false;
 
         if (neighTile === TileValues.mine) {
           neighMines++;
-          neighTimeIsMine = true;
+          neighTileIsMine = true;
         }
 
         if (neighShowedTile === TileValues.flag) {
           neighFlags++;
-        } else {
-          if (neighTimeIsMine) {
+        } else if(neighShowedTile === TileValues.hidden){
+          console.log("A")
+          if (neighTileIsMine) {
             areFlagsCorrect = false;
           }
 
-          if (neighShowedTile instanceof Number) {
-            console.log("A");
+          if (neighTile > 0) {
+            exploreSafeTiles(neighTileRow, neighTileCol)
           }
         }
       }
     }
 
     if (neighFlags == neighMines) {
-      let newShowedTiles = [...showedTiles];
-      newShowedTiles[row][col] = tile;
-      setShowedTiles(newShowedTiles);
+      exploredShowedTiles[row][col] = tile;
 
       if (!areFlagsCorrect) {
         loseLogic();
@@ -256,7 +259,10 @@ const Game = () => {
           loseLogic();
         }
       } else {
+        exploredShowedTiles = [...showedTiles];
         exploreSafeTiles(row, col);
+        setShowedTiles(exploredShowedTiles);
+        exploredShowedTiles = [];
       }
     }
   };
