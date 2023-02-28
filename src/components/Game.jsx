@@ -5,31 +5,32 @@ import Board from "./Board";
 const Game = () => {
   const [tiles, setTiles] = useState([]);
   const [showedTiles, setShowedTiles] = useState([]);
-  const [placedFlags, setPlacedFlags] = useState(0)
-  const [elapsedTime, setElapsedTime] = useState(0)
-  const [isEndedGame, setIsEndedGame] = useState(false)
+  const [placedFlags, setPlacedFlags] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isEndedGame, setIsEndedGame] = useState(false);
 
-  const size = 16
-  const numberOfMines = 40
+  const numberOfRows = 16;
+  const numberOfCols = 16;
+  const numberOfMines = 40;
 
   useEffect(() => {
     initTiles();
     initShowedTiles();
   }, []);
 
-  let timer
+  let timer;
 
   const initTimer = () => {
     timer = setInterval(() => {
-      setElapsedTime((elapsedTime) => elapsedTime + 1)
-    }, 1000)
-  }
+      setElapsedTime((elapsedTime) => elapsedTime + 1);
+    }, 1000);
+  };
 
   const initTiles = () => {
     let newTiles = [];
 
-    for (let i = 0; i < size; i++) {
-      const column = new Array(size).fill(TileValues.empty);
+    for (let i = 0; i < numberOfRows; i++) {
+      const column = new Array(numberOfCols).fill(TileValues.empty);
       newTiles.push(column);
     }
 
@@ -37,8 +38,8 @@ const Game = () => {
 
     //add mines
     for (let i = 0; i < numberOfMines; ) {
-      let randRow = Math.floor(Math.random() * (size - 1));
-      let randCol = Math.floor(Math.random() * (size - 1));
+      let randRow = Math.floor(Math.random() * (numberOfRows - 1));
+      let randCol = Math.floor(Math.random() * (numberOfCols - 1));
 
       if (newTiles[randRow][randCol] == TileValues.empty) {
         newTiles[randRow][randCol] = TileValues.mine;
@@ -77,56 +78,79 @@ const Game = () => {
   const initShowedTiles = () => {
     let newShowedTiles = [];
 
-    for (let i = 0; i < size; i++) {
-      const column = new Array(size).fill(TileValues.hidden);
+    for (let i = 0; i < numberOfRows; i++) {
+      const column = new Array(numberOfCols).fill(TileValues.hidden);
       newShowedTiles.push(column);
     }
 
     setShowedTiles([...newShowedTiles]);
   };
 
+  const showBoardAfterLose = () => {
+    let newShowedTiles = [...showedTiles];
+
+    tiles.forEach((tilesRow, rowIndex) => {
+      tilesRow.forEach((tile, colIndex) => {
+        const showedTile = newShowedTiles[rowIndex][colIndex];
+        if (tile === TileValues.mine && showedTile !== TileValues.flag) {
+          newShowedTiles[rowIndex][colIndex] = tile;
+        }
+      });
+    });
+
+    setShowedTiles(newShowedTiles);
+  };
+
+  const afterEndgameLogic = () => {
+    if(window.confirm('Jeszcze jedna rozgrywka?')){
+      initTiles();
+      initShowedTiles();
+      setIsEndedGame(false)
+    }
+  }
+
   const loseLogic = () => {
-    setIsEndedGame(true)
-    clearInterval(timer)
+    setIsEndedGame(true);
+    showBoardAfterLose();
+    clearInterval(timer);
     alert("Przegrana!");
+    afterEndgameLogic()
   };
 
   const winLogic = () => {
-    let exploredTiles = 0
-    showedTiles.forEach(
-      (tilesRow) => {
-        exploredTiles += tilesRow.filter(
-          (tile) => tile !== TileValues.hidden && tile !== TileValues.flag
-        ).length
-      }
-    )
+    let exploredTiles = 0;
+    showedTiles.forEach((tilesRow) => {
+      exploredTiles += tilesRow.filter(
+        (tile) => tile !== TileValues.hidden && tile !== TileValues.flag
+      ).length;
+    });
 
-    if(exploredTiles == size*size - numberOfMines){
-      setIsEndedGame(true)
-      clearInterval(timer)
-      alert("Wygrana!")
+    if (exploredTiles == numberOfRows * numberOfCols - numberOfMines) {
+      setIsEndedGame(true);
+      clearInterval(timer);
+      alert("Wygrana!");
+      afterEndgameLogic()
     }
   };
 
-  let exploredShowedTiles = []
+  let exploredShowedTiles = [];
 
   const exploreEmptyTiles = (row, col) => {
-
-    if(row < 0 || row == tiles.length || col < 0 || col == tiles.length){
-      return;
-    }
-    
-    const showedTile = exploredShowedTiles[row][col]
-
-    if(showedTile != TileValues.hidden){
+    if (row < 0 || row == tiles.length || col < 0 || col == tiles.length) {
       return;
     }
 
-    const tile = tiles[row][col]
+    const showedTile = exploredShowedTiles[row][col];
 
-    exploredShowedTiles[row][col] = tile
+    if (showedTile != TileValues.hidden) {
+      return;
+    }
 
-    if(tile != TileValues.empty){
+    const tile = tiles[row][col];
+
+    exploredShowedTiles[row][col] = tile;
+
+    if (tile != TileValues.empty) {
       return;
     }
 
@@ -134,23 +158,70 @@ const Game = () => {
       for (let iCol = -1; iCol < 2; iCol++) {
         const neighRow = row + iRow;
         const neighCol = col + iCol;
-        exploreEmptyTiles(neighRow, neighCol)
+        exploreEmptyTiles(neighRow, neighCol);
       }
     }
-  }
+  };
 
   const exploreSafeTiles = (row, col) => {
-    console.log("A")
-  }
-
-  const handleClick = (e, row, col) => {
-
-    if(isEndedGame){
+    if (row < 0 || row == tiles.length || col < 0 || col == tiles.length) {
       return;
     }
 
-    if(elapsedTime == 0){
-      initTimer()
+    const tile = tiles[row][col];
+
+    let neighFlags = 0;
+    let neighMines = 0;
+
+    let areFlagsCorrect = true;
+
+    for (let iRow = -1; iRow < 2; iRow++) {
+      for (let iCol = -1; iCol < 2; iCol++) {
+        const neighTileRow = row + iRow;
+        const neighTileCol = col + iCol;
+
+        const neighTile = tiles[neighTileRow][neighTileCol];
+        const neighShowedTile = showedTiles[neighTileRow][neighTileCol];
+
+        let neighTimeIsMine = false;
+
+        if (neighTile === TileValues.mine) {
+          neighMines++;
+          neighTimeIsMine = true;
+        }
+
+        if (neighShowedTile === TileValues.flag) {
+          neighFlags++;
+        } else {
+          if (neighTimeIsMine) {
+            areFlagsCorrect = false;
+          }
+
+          if (neighShowedTile instanceof Number) {
+            console.log("A");
+          }
+        }
+      }
+    }
+
+    if (neighFlags == neighMines) {
+      let newShowedTiles = [...showedTiles];
+      newShowedTiles[row][col] = tile;
+      setShowedTiles(newShowedTiles);
+
+      if (!areFlagsCorrect) {
+        loseLogic();
+      }
+    }
+  };
+
+  const handleClick = (e, row, col) => {
+    if (isEndedGame) {
+      return;
+    }
+
+    if (elapsedTime == 0) {
+      //initTimer()
     }
 
     let showedTile = showedTiles[row][col];
@@ -159,11 +230,11 @@ const Game = () => {
     if (e.button == 2) {
       if (showedTile == TileValues.flag) {
         newShowedTiles[row][col] = TileValues.hidden;
-        setPlacedFlags(placedFlags - 1)
+        setPlacedFlags(placedFlags - 1);
         setShowedTiles(newShowedTiles);
       } else if (showedTile == TileValues.hidden) {
         newShowedTiles[row][col] = TileValues.flag;
-        setPlacedFlags(placedFlags + 1)
+        setPlacedFlags(placedFlags + 1);
         setShowedTiles(newShowedTiles);
       }
     } else {
@@ -171,23 +242,21 @@ const Game = () => {
         const tile = tiles[row][col];
 
         if (tile !== TileValues.mine) {
-          exploredShowedTiles = [...showedTiles]
-          exploreEmptyTiles(row, col, [...showedTiles])
-          setShowedTiles(exploredShowedTiles)
-          exploredShowedTiles = []
+          exploredShowedTiles = [...showedTiles];
+          exploreEmptyTiles(row, col, [...showedTiles]);
+          setShowedTiles(exploredShowedTiles);
+          exploredShowedTiles = [];
 
-          winLogic()
-        }
-        else{
-          const newShowedTiles = [...showedTiles]
-          newShowedTiles[row][col] = tile
-          setShowedTiles(newShowedTiles)
+          winLogic();
+        } else {
+          const newShowedTiles = [...showedTiles];
+          newShowedTiles[row][col] = tile;
+          setShowedTiles(newShowedTiles);
 
-          loseLogic()
+          loseLogic();
         }
-      }
-      else{
-        exploreSafeTiles(row, col)
+      } else {
+        exploreSafeTiles(row, col);
       }
     }
   };
@@ -197,12 +266,15 @@ const Game = () => {
       <Board tiles={showedTiles} onClick={handleClick} />
       <div id="info">
         <div id="mines">
-          <p className="tile tile-mine noselect" style={{width: 50, height: 50}}>*</p>
+          <p
+            className="tile tile-mine noselect"
+            style={{ width: 50, height: 50 }}
+          >
+            *
+          </p>
           <p>{numberOfMines - placedFlags}</p>
         </div>
-        <div id="timer">
-          Czas: {elapsedTime} s
-        </div>
+        <div id="timer">Czas: {elapsedTime} s</div>
       </div>
     </div>
   );

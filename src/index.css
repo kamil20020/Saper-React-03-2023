@@ -1,5 +1,5 @@
 :root{
-  --tile-size: 16
+  --tile-size: 16;
 }
 
 body {
@@ -40,6 +40,7 @@ body {
   display: grid;
   grid-template-rows: repeat(var(--tile-size), 1fr);
   grid-template-columns: repeat(var(--tile-size), 1fr);
+  justify-content: center;
 }
 
 .tile{
