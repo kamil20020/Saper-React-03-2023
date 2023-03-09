@@ -9,9 +9,9 @@ const Game = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isEndedGame, setIsEndedGame] = useState(false);
 
-  const numberOfRows = 16;
-  const numberOfCols = 16;
-  const numberOfMines = 40;
+  const numberOfRows = 8;
+  const numberOfCols = 8;
+  const numberOfMines = 10;
 
   useEffect(() => {
     initTiles();
@@ -128,8 +128,8 @@ const Game = () => {
     if (exploredTiles == numberOfRows * numberOfCols - numberOfMines) {
       setIsEndedGame(true);
       //clearInterval(timer);
-      //alert("Wygrana!");
-      //afterEndgameLogic()
+      alert("Wygrana!");
+      afterEndgameLogic()
     }
   };
 
@@ -164,23 +164,25 @@ const Game = () => {
   };
 
   const exploreSafeTiles = (row, col) => {
-    if (row < 0 || row == tiles.length || col < 0 || col == tiles.length) {
+
+    const tile = showedTiles[row][col]
+
+    if(!/^\d+$/.test(tile)){
       return;
     }
 
-    const tile = tiles[row][col];
-
     let neighFlags = 0;
     let neighMines = 0;
+    let correctFlags = 0;
 
-    let areFlagsCorrect = true;
+    let numberFields = []
 
     for (let iRow = -1; iRow < 2; iRow++) {
       for (let iCol = -1; iCol < 2; iCol++) {
         const neighTileRow = row + iRow;
         const neighTileCol = col + iCol;
 
-        if(neighTileRow < 0 || neighTileRow == numberOfRows || neighTileCol < 0 || neighTileCol == numberOfCols){
+        if (neighTileRow < 0 || neighTileRow == tiles.length || neighTileCol < 0 || neighTileCol == tiles.length) {
           continue;
         }
 
@@ -196,24 +198,26 @@ const Game = () => {
 
         if (neighShowedTile === TileValues.flag) {
           neighFlags++;
-        } else if(neighShowedTile === TileValues.hidden){
-          console.log("A")
-          if (neighTileIsMine) {
-            areFlagsCorrect = false;
+          if(neighTileIsMine){
+            correctFlags++;
           }
-
-          if (neighTile > 0) {
-            exploreSafeTiles(neighTileRow, neighTileCol)
+        } else if(neighShowedTile === TileValues.hidden){
+          if (!neighTileIsMine) {
+            numberFields.push({row: neighTileRow, col: neighTileCol})
           }
         }
       }
     }
 
     if (neighFlags == neighMines) {
-      exploredShowedTiles[row][col] = tile;
-
-      if (!areFlagsCorrect) {
+      if (correctFlags != neighMines) {
         loseLogic();
+      }
+      else{
+        for(let i=0; i < numberFields.length; i++){
+          const {row, col} = numberFields[i];
+          exploreEmptyTiles(row, col)
+        }
       }
     }
   };
