@@ -112,9 +112,9 @@ const Game = () => {
   const loseLogic = () => {
     setIsEndedGame(true);
     showBoardAfterLose();
-    //clearInterval(timer);
-    //alert("Przegrana!");
-    //afterEndgameLogic()
+    clearInterval(timer);
+    alert("Przegrana!");
+    afterEndgameLogic()
   };
 
   const winLogic = () => {
@@ -266,6 +266,7 @@ const Game = () => {
         exploredShowedTiles = [...showedTiles];
         exploreSafeTiles(row, col);
         setShowedTiles(exploredShowedTiles);
+        winLogic();
         exploredShowedTiles = [];
       }
     }
