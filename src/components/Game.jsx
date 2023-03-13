@@ -38,8 +38,8 @@ const Game = () => {
 
     //add mines
     for (let i = 0; i < numberOfMines; ) {
-      let randRow = Math.floor(Math.random() * (numberOfRows - 1));
-      let randCol = Math.floor(Math.random() * (numberOfCols - 1));
+      let randRow = Math.floor(Math.random() * numberOfRows);
+      let randCol = Math.floor(Math.random() * numberOfCols);
 
       if (newTiles[randRow][randCol] == TileValues.empty) {
         newTiles[randRow][randCol] = TileValues.mine;
