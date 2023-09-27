@@ -19,13 +19,14 @@ body {
 }
 
 #info{
-  margin-left: 50px;
+  margin-left: 90px;
 }
 
 #mines{
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
+  column-gap: 20px;
 }
 
 #timer{

@@ -279,13 +279,12 @@ const Game = () => {
         <div id="mines">
           <p
             className="tile tile-mine noselect"
-            style={{ width: 50, height: 50 }}
+            style={{ width: 50, height: 50}}
           >
             *
           </p>
-          <p>{numberOfMines - placedFlags}</p>
+          <p style={{minWidth: 32}}>{numberOfMines - placedFlags}</p>
         </div>
-        <div id="timer">Czas: {elapsedTime} s</div>
       </div>
     </div>
   );
